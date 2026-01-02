@@ -1,0 +1,3 @@
+export const MyDetails = () => {
+    return <header></header>
+}

@@ -46,9 +46,7 @@ export const Contact = () => {
         "https://formsubmit.co/ajax/aipromptweb@gmail.com",
         {
           method: "POST",
-          headers: {
-            Accept: "application/json",
-          },
+          headers: { Accept: "application/json" },
           body: formData,
         }
       );
@@ -71,12 +69,14 @@ export const Contact = () => {
 
   return (
     <section id="contact" className="py-32 relative overflow-hidden">
+      {/* Background */}
       <div className="absolute inset-0">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-highlight/5 rounded-full blur-3xl" />
       </div>
 
       <div className="container mx-auto px-6 relative z-10">
+        {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <span className="text-secondary-foreground text-sm font-medium uppercase">
             Contact
@@ -89,18 +89,16 @@ export const Contact = () => {
           </p>
         </div>
 
+        {/* MAIN GRID */}
         <div className="grid lg:grid-cols-2 gap-12 max-w-5xl mx-auto">
+          {/* FORM */}
           <div className="glass p-8 rounded-3xl">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Anti-spam */}
               <input type="text" name="_honey" style={{ display: "none" }} />
-
-              {/* Improve deliverability */}
               <input type="hidden" name="_captcha" value="false" />
               <input type="hidden" name="_template" value="table" />
               <input type="hidden" name="_subject" value="New Website Contact" />
-
-              {/* THIS IS CRITICAL */}
               <input type="hidden" name="_replyto" value="%email%" />
 
               <div>
@@ -133,7 +131,13 @@ export const Contact = () => {
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Sending..." : <>Send Message <Send className="w-5 h-5" /></>}
+                {loading ? (
+                  "Sending..."
+                ) : (
+                  <>
+                    Send Message <Send className="w-5 h-5" />
+                  </>
+                )}
               </Button>
 
               {status === "success" && (
@@ -152,29 +156,46 @@ export const Contact = () => {
             </form>
           </div>
 
-          <div className="glass rounded-3xl p-8">
-            <h3 className="text-xl font-semibold mb-6">
-              Contact Information
-            </h3>
+          {/* RIGHT COLUMN */}
+          <div className="space-y-6">
+            {/* Contact Info */}
+            <div className="glass rounded-3xl p-8">
+              <h3 className="text-xl font-semibold mb-6">
+                Contact Information
+              </h3>
 
-            <div className="space-y-4">
-              {contactInfo.map((item, i) => (
-                <a
-                  key={i}
-                  href={item.href}
-                  className="flex items-center gap-4 p-4 rounded-xl hover:bg-surface"
-                >
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <item.icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground">
-                      {item.label}
+              <div className="space-y-4">
+                {contactInfo.map((item, i) => (
+                  <a
+                    key={i}
+                    href={item.href}
+                    className="flex items-center gap-4 p-4 rounded-xl hover:bg-surface transition"
+                  >
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                      <item.icon className="w-5 h-5 text-primary" />
                     </div>
-                    <div className="font-medium">{item.value}</div>
-                  </div>
-                </a>
-              ))}
+                    <div>
+                      <div className="text-sm text-muted-foreground">
+                        {item.label}
+                      </div>
+                      <div className="font-medium">{item.value}</div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Availability Card */}
+            <div className="glass rounded-3xl p-8 border border-primary/30">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                <span className="font-medium">Currently Available</span>
+              </div>
+              <p className="text-muted-foreground text-sm">
+                I'm currently open to new opportunities and exciting projects.
+                Whether you need a full-time engineer or a freelance consultant,
+                let's talk!
+              </p>
             </div>
           </div>
         </div>

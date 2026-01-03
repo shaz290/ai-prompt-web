@@ -3,6 +3,7 @@ import { Hero } from "@/sections/Hero";
 import { About } from "@/sections/About";
 import { MyDetails } from "@/sections/MyDetails";
 import { Contact } from "@/sections/Contact";
+import { Footer } from "@/layout/Footer";
 
 export const Home = () => {
   return (
@@ -14,6 +15,7 @@ export const Home = () => {
         <MyDetails />
         <Contact />
       </main>
+      <Footer/>
     </>
   );
 };

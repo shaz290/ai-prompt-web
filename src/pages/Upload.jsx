@@ -1,5 +1,7 @@
 import { useState, useRef } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { Navbar } from "@/layout/Navbar";
+import { Footer } from "@/layout/Footer";
 
 export const Upload = () => {
   const [imageName, setImageName] = useState("");
@@ -35,7 +37,7 @@ export const Upload = () => {
           image_name: imageName,
           image_type: imageType,
           description_details: description,
-          priority: priority,
+          priority,
           created_on: Date.now(),
         })
         .select("id")
@@ -82,130 +84,112 @@ export const Upload = () => {
   };
 
   return (
-    <div className="min-h-screen py-24 px-4 bg-background">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <>
+      {/* ✅ NAVBAR */}
+      <Navbar />
 
-        {/* Header */}
-        <h1 className="text-3xl font-bold text-center">
-          Upload Images
-        </h1>
+      <main className="min-h-screen py-32 px-4 bg-background">
+        <div className="max-w-3xl mx-auto space-y-6">
 
-        {/* Image Name */}
-        <input
-          placeholder="Image name"
-          value={imageName}
-          onChange={(e) => setImageName(e.target.value)}
-          className="w-full px-4 py-3 rounded-xl border border-border bg-background
-                     focus:outline-none focus:ring-2 focus:ring-primary"
-        />
+          <h1 className="text-3xl font-bold text-center">
+            Upload Images
+          </h1>
 
-        {/* Image Type (Styled Select) */}
-        <div className="relative">
-          <select
-            value={imageType}
-            onChange={(e) => setImageType(e.target.value)}
-            className="
-              w-full
-              px-4 py-3 pr-10
-              border border-border
-              rounded-xl
-              bg-background
-              text-foreground
-              appearance-none
-              focus:outline-none
-              focus:ring-2
-              focus:ring-primary
-              focus:border-primary
-            "
-          >
-            <option value="" disabled>
-              Select type
-            </option>
-            <option value="men">Men</option>
-            <option value="women">Women</option>
-            <option value="kids">Kids</option>
-            <option value="other">Other</option>
-          </select>
-
-          {/* Custom dropdown arrow */}
-          <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center">
-            <svg
-              className="w-4 h-4 text-muted-foreground"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </div>
-        </div>
-
-        {/* Description */}
-        <textarea
-          rows={4}
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full px-4 py-3 rounded-xl border border-border bg-background
-                     focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-        />
-
-        {/* Priority */}
-        <input
-          type="number"
-          placeholder="Priority (higher = shown first)"
-          value={priority}
-          onChange={(e) => setPriority(Number(e.target.value))}
-          className="w-full px-4 py-3 rounded-xl border border-border bg-background
-                     focus:outline-none focus:ring-2 focus:ring-primary"
-        />
-
-        {/* File Picker */}
-        <div
-          onClick={() => fileInputRef.current.click()}
-          className="border-2 border-dashed border-border p-8 rounded-xl
-                     text-center cursor-pointer hover:border-primary transition"
-        >
-          Click to select images
           <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            hidden
-            accept="image/*"
-            onChange={(e) =>
-              setSelectedFiles(Array.from(e.target.files || []))
-            }
+            placeholder="Image name"
+            value={imageName}
+            onChange={(e) => setImageName(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border border-border bg-background
+                       focus:outline-none focus:ring-2 focus:ring-primary"
           />
+
+          {/* Styled Select */}
+          <div className="relative">
+            <select
+              value={imageType}
+              onChange={(e) => setImageType(e.target.value)}
+              className="w-full px-4 py-3 pr-10 border border-border rounded-xl
+                         bg-background appearance-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="" disabled>
+                Select type
+              </option>
+              <option value="men">Men</option>
+              <option value="women">Women</option>
+              <option value="kids">Kids</option>
+              <option value="other">Other</option>
+            </select>
+
+            <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center">
+              <svg
+                className="w-4 h-4 text-muted-foreground"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+
+          <textarea
+            rows={4}
+            placeholder="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border border-border bg-background
+                       focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+          />
+
+          <input
+            type="number"
+            placeholder="Priority (higher = shown first)"
+            value={priority}
+            onChange={(e) => setPriority(Number(e.target.value))}
+            className="w-full px-4 py-3 rounded-xl border border-border bg-background
+                       focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+
+          <div
+            onClick={() => fileInputRef.current.click()}
+            className="border-2 border-dashed border-border p-8 rounded-xl
+                       text-center cursor-pointer hover:border-primary transition"
+          >
+            Click to select images
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              hidden
+              accept="image/*"
+              onChange={(e) =>
+                setSelectedFiles(Array.from(e.target.files || []))
+              }
+            />
+          </div>
+
+          {selectedFiles.length > 0 && (
+            <p className="text-sm text-center text-muted-foreground">
+              {selectedFiles.length} image(s) selected
+            </p>
+          )}
+
+          <button
+            onClick={handleUpload}
+            disabled={loading}
+            className="w-full py-3 rounded-xl font-semibold
+                       bg-primary text-white hover:opacity-90
+                       disabled:opacity-50 transition"
+          >
+            {loading ? "Uploading..." : "Upload"}
+          </button>
+
         </div>
+      </main>
 
-        {selectedFiles.length > 0 && (
-          <p className="text-sm text-center text-muted-foreground">
-            {selectedFiles.length} image(s) selected
-          </p>
-        )}
-
-        {/* Upload Button */}
-        <button
-          onClick={handleUpload}
-          disabled={loading}
-          className="
-            w-full py-3 rounded-xl font-semibold
-            bg-primary text-white
-            hover:opacity-90
-            disabled:opacity-50 disabled:cursor-not-allowed
-            transition
-          "
-        >
-          {loading ? "Uploading..." : "Upload"}
-        </button>
-
-      </div>
-    </div>
+      {/* ✅ FOOTER */}
+      <Footer />
+    </>
   );
 };

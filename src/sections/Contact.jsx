@@ -13,14 +13,14 @@ const contactInfo = [
   {
     icon: Mail,
     label: "Email",
-    value: "aipromptweb@gmail.com",
-    href: "mailto:aipromptweb@gmail.com",
+    value: "theahsanw@gmail.com",
+    href: "mailto:theahsanw@gmail.com",
   },
   {
     icon: Phone,
     label: "Phone",
-    value: "+91 98765 43210",
-    href: "tel:+919876543210",
+    value: "+91 99999 99999",
+    href: "tel:+919999999999",
   },
   {
     icon: MapPin,

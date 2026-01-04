@@ -155,109 +155,128 @@
   }
 
   @layer components {
-  .file-upload {
-    padding: 2.5rem;
+    .file-upload {
+      padding: 2.5rem;
+    }
+
+    .upload-container {
+      background-color: color-mix(in srgb, var(--color-surface) 70%, transparent);
+      border: 2px dashed var(--color-border);
+      border-radius: var(--radius);
+      padding: 3rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(16px);
+    }
+
+    .upload-container:hover {
+      border-color: var(--color-primary);
+      background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+      box-shadow: 0 0 25px color-mix(in srgb, var(--color-primary) 25%, transparent);
+    }
+
+    .upload-container p {
+      margin-top: 0.75rem;
+      font-size: 0.95rem;
+      color: var(--color-muted-foreground);
+    }
+
+    .upload-container svg {
+      color: var(--color-primary);
+      margin: auto;
+    }
+
+    .upload-container.disabled {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    /* Preview grid */
+    .preview-grid {
+      margin-top: 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .preview-item {
+      background-color: var(--color-card);
+      border-radius: var(--radius);
+      padding: 0.5rem;
+      border: 1px solid var(--color-border);
+      animation: fade-in 0.6s ease-out both;
+    }
+
+    .preview-item img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      border-radius: calc(var(--radius) - 4px);
+    }
+
+    .preview-item span {
+      display: block;
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      text-align: center;
+      color: var(--color-muted-foreground);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 1.25rem;
+      right: 1.25rem;
+      padding: 0.75rem 1.1rem;
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      z-index: 9999;
+      backdrop-filter: blur(16px);
+      animation: fade-in 0.4s ease-out both;
+    }
+
+    .toast.success {
+      background-color: color-mix(in srgb,
+          var(--color-primary) 20%,
+          transparent);
+      border: 1px solid var(--color-primary);
+      color: var(--color-primary-foreground);
+      box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 30%, transparent);
+    }
+
+    .toast.error {
+      background-color: color-mix(in srgb, #dc2626 20%, transparent);
+      border: 1px solid #dc2626;
+      color: #fff;
+      box-shadow: 0 0 20px color-mix(in srgb, #dc2626 30%, transparent);
+    }
   }
 
-  .upload-container {
-    background-color: color-mix(in srgb, var(--color-surface) 70%, transparent);
-    border: 2px dashed var(--color-border);
-    border-radius: var(--radius);
-    padding: 3rem;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(16px);
+  /* Clean hidden scrollbar but scrollable */
+  .description-scroll {
+    overflow-y: auto;
+    scrollbar-width: none;
+    /* Firefox */
   }
 
-  .upload-container:hover {
-    border-color: var(--color-primary);
-    background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
-    box-shadow: 0 0 25px
-      color-mix(in srgb, var(--color-primary) 25%, transparent);
+  .description-scroll::-webkit-scrollbar {
+    width: 0;
+    height: 0;
   }
 
-  .upload-container p {
-    margin-top: 0.75rem;
-    font-size: 0.95rem;
-    color: var(--color-muted-foreground);
+  /* Desktop: scroll only on hover */
+  @media (hover: hover) {
+    .description-scroll {
+      overflow-y: hidden;
+    }
+
+    .description-scroll:hover {
+      overflow-y: auto;
+    }
   }
 
-  .upload-container svg {
-    color: var(--color-primary);
-    margin: auto;
-  }
-
-  .upload-container.disabled {
-    opacity: 0.6;
-    pointer-events: none;
-  }
-
-  /* Preview grid */
-  .preview-grid {
-    margin-top: 2rem;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 1.25rem;
-  }
-
-  .preview-item {
-    background-color: var(--color-card);
-    border-radius: var(--radius);
-    padding: 0.5rem;
-    border: 1px solid var(--color-border);
-    animation: fade-in 0.6s ease-out both;
-  }
-
-  .preview-item img {
-    width: 100%;
-    height: 140px;
-    object-fit: cover;
-    border-radius: calc(var(--radius) - 4px);
-  }
-
-  .preview-item span {
-    display: block;
-    margin-top: 0.5rem;
-    font-size: 0.75rem;
-    text-align: center;
-    color: var(--color-muted-foreground);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* Toast */
-  .toast {
-    position: fixed;
-    top: 1.25rem;
-    right: 1.25rem;
-    padding: 0.75rem 1.1rem;
-    border-radius: var(--radius);
-    font-size: 0.85rem;
-    z-index: 9999;
-    backdrop-filter: blur(16px);
-    animation: fade-in 0.4s ease-out both;
-  }
-
-  .toast.success {
-    background-color: color-mix(
-      in srgb,
-      var(--color-primary) 20%,
-      transparent
-    );
-    border: 1px solid var(--color-primary);
-    color: var(--color-primary-foreground);
-    box-shadow: 0 0 20px
-      color-mix(in srgb, var(--color-primary) 30%, transparent);
-  }
-
-  .toast.error {
-    background-color: color-mix(in srgb, #dc2626 20%, transparent);
-    border: 1px solid #dc2626;
-    color: #fff;
-    box-shadow: 0 0 20px
-      color-mix(in srgb, #dc2626 30%, transparent);
-  }
-}
 }

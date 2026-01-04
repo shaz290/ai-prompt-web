@@ -2,14 +2,12 @@ import {
   useEffect,
   useState,
   useRef,
-  useLayoutEffect,
 } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { SiOpenai, SiGoogle, SiPerplexity } from "react-icons/si";
 
 const PAGE_SIZE = 4;
-const SWIPE_THRESHOLD = 50;
 
 /* ---------- SHARE PARAM ---------- */
 const getShareIdFromUrl = () => {
@@ -17,27 +15,32 @@ const getShareIdFromUrl = () => {
   return params.get("share");
 };
 
+/* ---------- DATE FORMATTER ---------- */
+const formatDate = (date) => {
+  if (!date) return "";
+  return new Date(date).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
 export const MyDetails = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [currentPage, setCurrentPage] = useState(1);
   const [activeIndex, setActiveIndex] = useState({});
   const [toastMessage, setToastMessage] = useState("");
   const [sharedId, setSharedId] = useState(null);
-
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
   const cardRefs = useRef({});
-  const touchStartX = useRef(0);
-  const touchEndX = useRef(0);
 
   /* ---------- INITIAL LOAD ---------- */
   useEffect(() => {
     const id = getShareIdFromUrl();
     if (id) setSharedId(id);
-
     checkAuth();
     fetchDetails();
   }, []);
@@ -73,32 +76,14 @@ export const MyDetails = () => {
       .select(`
         id,
         description_details,
+        created_on,
         image_urls ( image_url )
       `)
       .order("created_on", { ascending: false });
 
     if (!error) setData(data);
-    else console.error(error);
-
     setLoading(false);
   };
-
-  /* ---------- INSTANT SCROLL FOR SHARE ---------- */
-  useLayoutEffect(() => {
-    if (sharedId && !loading && cardRefs.current[sharedId]) {
-      const navbar = document.querySelector("header");
-      const navbarHeight = navbar?.offsetHeight || 80;
-
-      const top =
-        cardRefs.current[sharedId].getBoundingClientRect().top +
-        window.scrollY;
-
-      window.scrollTo({
-        top: top - navbarHeight - 16,
-        behavior: "auto",
-      });
-    }
-  }, [sharedId, loading]);
 
   /* ---------- ACCESS CONTROL ---------- */
   if (!checkingAuth && !isAdmin && !sharedId) {
@@ -112,86 +97,25 @@ export const MyDetails = () => {
     );
   }
 
-  /* ---------- FILTER DATA ---------- */
+  /* ---------- FILTER & PAGINATION ---------- */
   const filteredData = sharedId
     ? data.filter((item) => item.id.toString() === sharedId)
     : data;
 
-  /* ---------- PAGINATION ---------- */
   const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
 
-  const paginatedData = sharedId || !isAdmin
-    ? filteredData
-    : filteredData.slice(
-        (currentPage - 1) * PAGE_SIZE,
-        currentPage * PAGE_SIZE
-      );
-
-  /* ---------- SLIDER ---------- */
-  const nextImage = (id, length) => {
-    setActiveIndex((prev) => ({
-      ...prev,
-      [id]: ((prev[id] || 0) + 1) % length,
-    }));
-  };
-
-  const prevImage = (id, length) => {
-    setActiveIndex((prev) => ({
-      ...prev,
-      [id]: (prev[id] || 0) === 0 ? length - 1 : prev[id] - 1,
-    }));
-  };
-
-  /* ---------- SWIPE ---------- */
-  const handleTouchStart = (e) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchMove = (e) => {
-    touchEndX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = (id, length) => {
-    const delta = touchStartX.current - touchEndX.current;
-    if (Math.abs(delta) < SWIPE_THRESHOLD) return;
-
-    delta > 0 ? nextImage(id, length) : prevImage(id, length);
-  };
+  const paginatedData =
+    sharedId || !isAdmin
+      ? filteredData
+      : filteredData.slice(
+          (currentPage - 1) * PAGE_SIZE,
+          currentPage * PAGE_SIZE
+        );
 
   /* ---------- TOAST ---------- */
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(""), 1500);
-  };
-
-  /* ---------- ACTIONS ---------- */
-  const handleCopy = async (text) => {
-    await navigator.clipboard.writeText(text);
-    showToast("Copied to clipboard");
-  };
-
-  const handleShare = async (id) => {
-    const url = `${window.location.origin}?share=${id}`;
-    await navigator.clipboard.writeText(url);
-    showToast("Sharable link copied");
-  };
-
-  const openWithChatGPT = (text) => {
-    window.open("https://chat.openai.com/", "_blank");
-  };
-
-  const openWithGemini = (text) => {
-    window.open(
-      `https://gemini.google.com/app?q=${encodeURIComponent(text)}`,
-      "_blank"
-    );
-  };
-
-  const openWithPerplexity = (text) => {
-    window.open(
-      `https://www.perplexity.ai/?q=${encodeURIComponent(text)}`,
-      "_blank"
-    );
   };
 
   if (loading) {
@@ -206,7 +130,7 @@ export const MyDetails = () => {
     <section id="mydetails" className="py-32">
       <div className="container mx-auto px-6">
 
-        {/* ✅ HEADER ADDED BACK */}
+        {/* HEADER */}
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
             My <span className="font-serif italic">Creations</span>
@@ -215,7 +139,6 @@ export const MyDetails = () => {
             Browse AI-generated visuals
           </p>
         </div>
-
 
         {/* TOAST */}
         {toastMessage && (
@@ -226,6 +149,7 @@ export const MyDetails = () => {
           </div>
         )}
 
+        {/* GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-12">
           {paginatedData.map((item) => {
             const images = item.image_urls || [];
@@ -235,67 +159,93 @@ export const MyDetails = () => {
               <div
                 key={item.id}
                 ref={(el) => (cardRefs.current[item.id] = el)}
-                className="space-y-4"
+                className="flex flex-col h-full space-y-4"
               >
-                <div
-                  className="relative"
-                  onTouchStart={images.length > 1 ? handleTouchStart : undefined}
-                  onTouchMove={images.length > 1 ? handleTouchMove : undefined}
-                  onTouchEnd={
-                    images.length > 1
-                      ? () => handleTouchEnd(item.id, images.length)
-                      : undefined
-                  }
-                >
+                {/* IMAGE */}
+                <div className="relative">
                   <img
                     src={images[index]?.image_url}
                     className="w-full aspect-[4/5] object-cover rounded-2xl"
+                    alt="creation"
                   />
-
-                  {images.length > 1 && (
-                    <div className="absolute inset-y-0 left-0 right-0 flex justify-between px-3 items-center">
-                      <button onClick={() => prevImage(item.id, images.length)}>
-                        <ArrowLeft />
-                      </button>
-                      <button onClick={() => nextImage(item.id, images.length)}>
-                        <ArrowRight />
-                      </button>
-                    </div>
-                  )}
                 </div>
 
-                <p className="text-sm text-muted-foreground">
-                  {item.description_details}
+                {/* UPLOAD DATE */}
+                <p className="text-xs text-muted-foreground">
+                  Uploaded on {formatDate(item.created_on)}
                 </p>
 
-                <button
-                  onClick={() => handleCopy(item.description_details)}
-                  className="w-full py-2 bg-primary text-white rounded-xl"
-                >
-                  Copy
-                </button>
+                {/* DESCRIPTION */}
+                <div className="relative">
+                  <div className="description-scroll h-[96px] text-sm text-muted-foreground pr-1">
+                    {item.description_details}
+                  </div>
+                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent" />
+                </div>
 
-                {/* ❌ SHARE ONLY FOR ADMIN */}
-                {isAdmin && (
+                {/* ACTIONS */}
+                <div className="mt-auto space-y-3">
                   <button
-                    onClick={() => handleShare(item.id)}
-                    className="w-full py-2 border rounded-xl"
+                    onClick={() => {
+                      navigator.clipboard.writeText(item.description_details);
+                      showToast("Copied to clipboard");
+                    }}
+                    className="w-full py-2 bg-primary text-white rounded-xl"
                   >
-                    Share Link
+                    Copy
                   </button>
-                )}
 
-                <div className="flex justify-center gap-6 pt-2">
-                  <SiGoogle onClick={() => openWithGemini(item.description_details)} />
-                  <SiOpenai onClick={() => openWithChatGPT(item.description_details)} />
-                  <SiPerplexity onClick={() => openWithPerplexity(item.description_details)} />
+                  {isAdmin && (
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(
+                          `${window.location.origin}?share=${item.id}`
+                        );
+                        showToast("Sharable link copied");
+                      }}
+                      className="w-full py-2 border rounded-xl"
+                    >
+                      Share Link
+                    </button>
+                  )}
+
+                  <div className="flex justify-center gap-6 pt-2">
+                    <SiGoogle
+                      className="cursor-pointer"
+                      onClick={() =>
+                        window.open(
+                          `https://gemini.google.com/app?q=${encodeURIComponent(
+                            item.description_details
+                          )}`,
+                          "_blank"
+                        )
+                      }
+                    />
+                    <SiOpenai
+                      className="cursor-pointer"
+                      onClick={() =>
+                        window.open("https://chat.openai.com/", "_blank")
+                      }
+                    />
+                    <SiPerplexity
+                      className="cursor-pointer"
+                      onClick={() =>
+                        window.open(
+                          `https://www.perplexity.ai/?q=${encodeURIComponent(
+                            item.description_details
+                          )}`,
+                          "_blank"
+                        )
+                      }
+                    />
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* ❌ PAGINATION ONLY FOR ADMIN */}
+        {/* PAGINATION */}
         {isAdmin && !sharedId && totalPages > 1 && (
           <div className="flex justify-center gap-2 mt-16">
             {Array.from({ length: totalPages }).map((_, i) => (
@@ -313,7 +263,6 @@ export const MyDetails = () => {
             ))}
           </div>
         )}
-
       </div>
     </section>
   );

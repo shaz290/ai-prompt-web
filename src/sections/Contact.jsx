@@ -43,7 +43,7 @@ const Contact = () => {
 
     try {
       const res = await fetch(
-        "https://formsubmit.co/ajax/aipromptweb@gmail.com",
+        "https://formsubmit.co/ajax/theahsanw@gmail.com",
         {
           method: "POST",
           headers: { Accept: "application/json" },

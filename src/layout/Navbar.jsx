@@ -1,56 +1,88 @@
-import { Button } from "@/components/Button";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabaseClient";
 
 const navLinks = [
   { href: "#home", label: "Home" },
   { href: "#about", label: "About" },
-  { href: "#mydetails", label: "MyDetails" },
+  { href: "#mydetails", label: "My Creations" },
   { href: "/upload", label: "Upload" },
+   { href: "#contact", label: "Contact Me" },
 ];
 
 export const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [user, setUser] = useState(null);
 
   const location = useLocation();
   const navigate = useNavigate();
 
+  /* ---------- SCROLL ---------- */
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollToSection = (hash) => {
-    const el = document.querySelector(hash);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth" });
-    }
-  };
+  /* ---------- AUTH ---------- */
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+    });
 
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_e, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  /* ---------- NAV ---------- */
   const handleNavClick = (e, link) => {
     e.preventDefault();
     setIsMobileMenuOpen(false);
 
-    // Normal route navigation (/upload)
     if (!link.href.startsWith("#")) {
       navigate(link.href);
       return;
     }
 
-    // Section navigation (#about etc.)
     if (location.pathname !== "/") {
-      // First go to home, then scroll
       navigate("/");
       setTimeout(() => {
-        scrollToSection(link.href);
+        const el = document.querySelector(link.href);
+        el?.scrollIntoView({ behavior: "smooth" });
       }, 100);
     } else {
-      // Already on home
-      scrollToSection(link.href);
+      const el = document.querySelector(link.href);
+      el?.scrollIntoView({ behavior: "smooth" });
     }
+  };
+
+  /* ---------- LOGIN ---------- */
+  const handleLogin = () => {
+    setIsMobileMenuOpen(false);
+    navigate("/login");
+  };
+
+  /* ---------- LOGOUT (WORKING) ---------- */
+  const handleLogout = async () => {
+    console.log("LOGOUT CLICKED ✅");
+
+    setIsMobileMenuOpen(false);
+
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setUser(null);
+    navigate("/", { replace: true });
   };
 
   return (
@@ -60,63 +92,91 @@ export const Navbar = () => {
       }`}
     >
       <nav className="container mx-auto px-6 flex items-center justify-between">
+        {/* LOGO */}
         <a
           href="#home"
           onClick={(e) => handleNavClick(e, { href: "#home" })}
-          className="text-xl font-bold tracking-tight hover:text-primary"
+          className="text-xl font-bold hover:text-primary"
         >
           AHS<span className="text-primary">.</span>
         </a>
 
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-1">
-          <div className="glass rounded-full px-2 py-1 flex items-center gap-1">
-            {navLinks.map((link, index) => (
+        {/* DESKTOP */}
+        <div className="hidden md:flex items-center gap-4">
+          <div className="glass rounded-full px-2 py-1 flex gap-1">
+            {navLinks.map((link, i) => (
               <a
-                key={index}
+                key={i}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link)}
-                className="px-4 py-2 text-sm text-muted-foreground
-                           hover:text-foreground rounded-full hover:bg-surface"
+                className="px-4 py-2 text-sm hover:bg-surface rounded-full"
               >
                 {link.label}
               </a>
             ))}
           </div>
+
+          {user ? (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="px-4 py-2 text-sm rounded-xl border border-border hover:bg-surface"
+            >
+              Logout
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleLogin}
+              className="px-4 py-2 text-sm rounded-xl bg-primary text-white"
+            >
+              Login
+            </button>
+          )}
         </div>
 
-        {/* CTA */}
-        <div className="hidden md:block">
-          <Button size="sm">Contact Me</Button>
-        </div>
-
-        {/* Mobile Menu Button */}
+        {/* MOBILE TOGGLE */}
         <button
-          className="md:hidden p-2 text-foreground"
-          onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+          type="button"
+          className="md:hidden p-2"
+          onClick={() => setIsMobileMenuOpen((p) => !p)}
         >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          {isMobileMenuOpen ? <X /> : <Menu />}
         </button>
       </nav>
 
-      {/* Mobile Menu */}
+      {/* MOBILE MENU */}
       {isMobileMenuOpen && (
-        <div className="md:hidden glass-strong animate-fade-in">
-          <div className="container mx-auto px-6 py-6 flex flex-col gap-4">
-            {navLinks.map((link, index) => (
+        <div className="md:hidden glass-strong">
+          <div className="px-6 py-6 flex flex-col gap-4">
+            {navLinks.map((link, i) => (
               <a
-                key={index}
+                key={i}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link)}
-                className="text-lg text-muted-foreground hover:text-foreground py-2"
+                className="text-lg py-2"
               >
                 {link.label}
               </a>
             ))}
 
-            <Button onClick={() => setIsMobileMenuOpen(false)}>
-              Contact Me
-            </Button>
+            {user ? (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="py-3 rounded-xl border"
+              >
+                Logout
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleLogin}
+                className="py-3 rounded-xl bg-primary text-white"
+              >
+                Login
+              </button>
+            )}
           </div>
         </div>
       )}

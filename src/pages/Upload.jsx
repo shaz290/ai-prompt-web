@@ -1,21 +1,91 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { Navbar } from "@/layout/Navbar";
 import { Footer } from "@/layout/Footer";
+import { X } from "lucide-react";
 
 export const Upload = () => {
+  const [checkingAccess, setCheckingAccess] = useState(true);
+  const [hasAccess, setHasAccess] = useState(false);
+
   const [imageName, setImageName] = useState("");
   const [imageType, setImageType] = useState("");
   const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState(0);
+  const [priority, setPriority] = useState("");
 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // 🔥 Upload progress
+  const [currentUploadingIndex, setCurrentUploadingIndex] = useState(0);
 
   const fileInputRef = useRef(null);
 
   const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`;
 
+  /* ---------- ACCESS CHECK ---------- */
+  useEffect(() => {
+    const checkAccess = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        setHasAccess(false);
+        setCheckingAccess(false);
+        return;
+      }
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .single();
+
+      setHasAccess(!error && profile?.role === "admin");
+      setCheckingAccess(false);
+    };
+
+    checkAccess();
+  }, []);
+
+  /* ---------- ACCESS STATES ---------- */
+  if (checkingAccess) {
+    return (
+      <>
+        <Navbar />
+        <main className="min-h-screen py-32 flex items-center justify-center">
+          <p className="text-muted-foreground">Checking access...</p>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
+  if (!hasAccess) {
+    return (
+      <>
+        <Navbar />
+        <main className="min-h-screen py-32 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <h1 className="text-3xl font-bold">Access Denied 🚫</h1>
+            <p className="text-muted-foreground">
+              You don’t have access to this page.
+            </p>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
+  /* ---------- REMOVE IMAGE ---------- */
+  const removeFile = (index) => {
+    if (loading) return;
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  /* ---------- UPLOAD ---------- */
   const handleUpload = async () => {
     if (!imageName || !imageType || !description) {
       alert("Please fill all fields");
@@ -28,8 +98,11 @@ export const Upload = () => {
     }
 
     setLoading(true);
+    setCurrentUploadingIndex(0);
 
     try {
+      const finalPriority = priority === "" ? 0 : Number(priority);
+
       // 1️⃣ Insert description
       const { data: desc, error } = await supabase
         .from("descriptions")
@@ -37,7 +110,7 @@ export const Upload = () => {
           image_name: imageName,
           image_type: imageType,
           description_details: description,
-          priority,
+          priority: finalPriority,
           created_on: Date.now(),
         })
         .select("id")
@@ -45,8 +118,11 @@ export const Upload = () => {
 
       if (error) throw error;
 
-      // 2️⃣ Upload images
-      for (const file of selectedFiles) {
+      // 2️⃣ Upload images one by one
+      for (let i = 0; i < selectedFiles.length; i++) {
+        setCurrentUploadingIndex(i + 1);
+
+        const file = selectedFiles[i];
         const formData = new FormData();
         formData.append("file", file);
         formData.append(
@@ -73,47 +149,53 @@ export const Upload = () => {
       setImageName("");
       setImageType("");
       setDescription("");
-      setPriority(0);
+      setPriority("");
       setSelectedFiles([]);
     } catch (err) {
       console.error(err);
       alert("Upload failed ❌");
     } finally {
       setLoading(false);
+      setCurrentUploadingIndex(0);
     }
   };
 
+  const progressPercent =
+    selectedFiles.length > 0
+      ? Math.round(
+          (currentUploadingIndex / selectedFiles.length) * 100
+        )
+      : 0;
+
   return (
     <>
-      {/* ✅ NAVBAR */}
       <Navbar />
 
       <main className="min-h-screen py-32 px-4 bg-background">
         <div className="max-w-3xl mx-auto space-y-6">
 
           <h1 className="text-3xl font-bold text-center">
-            Upload Images
+            Upload Images (Admin)
           </h1>
 
           <input
             placeholder="Image name"
             value={imageName}
             onChange={(e) => setImageName(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-border bg-background
-                       focus:outline-none focus:ring-2 focus:ring-primary"
+            disabled={loading}
+            className="w-full px-4 py-3 rounded-xl border border-border"
           />
 
-          {/* Styled Select */}
+          {/* SELECT TYPE */}
           <div className="relative">
             <select
               value={imageType}
               onChange={(e) => setImageType(e.target.value)}
-              className="w-full px-4 py-3 pr-10 border border-border rounded-xl
-                         bg-background appearance-none focus:ring-2 focus:ring-primary"
+              disabled={loading}
+              className="w-full px-4 py-3 pr-12 rounded-xl border border-border
+                         bg-background appearance-none cursor-pointer"
             >
-              <option value="" disabled>
-                Select type
-              </option>
+              <option value="" disabled>Select type</option>
               <option value="men">Men</option>
               <option value="women">Women</option>
               <option value="kids">Kids</option>
@@ -138,23 +220,28 @@ export const Upload = () => {
             placeholder="Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-border bg-background
-                       focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            disabled={loading}
+            className="w-full px-4 py-3 rounded-xl border border-border"
           />
 
           <input
-            type="number"
-            placeholder="Priority (higher = shown first)"
+            type="text"
+            inputMode="numeric"
+            placeholder="Priority (optional)"
             value={priority}
-            onChange={(e) => setPriority(Number(e.target.value))}
-            className="w-full px-4 py-3 rounded-xl border border-border bg-background
-                       focus:outline-none focus:ring-2 focus:ring-primary"
+            onChange={(e) =>
+              setPriority(e.target.value.replace(/\D/g, ""))
+            }
+            disabled={loading}
+            className="w-full px-4 py-3 rounded-xl border border-border"
           />
 
+          {/* FILE PICKER */}
           <div
-            onClick={() => fileInputRef.current.click()}
-            className="border-2 border-dashed border-border p-8 rounded-xl
-                       text-center cursor-pointer hover:border-primary transition"
+            onClick={() => !loading && fileInputRef.current.click()}
+            className={`border-2 border-dashed p-8 rounded-xl text-center cursor-pointer
+              ${loading ? "opacity-50 cursor-not-allowed" : "hover:border-primary"}
+            `}
           >
             Click to select images
             <input
@@ -169,18 +256,55 @@ export const Upload = () => {
             />
           </div>
 
+          {/* PREVIEWS */}
           {selectedFiles.length > 0 && (
-            <p className="text-sm text-center text-muted-foreground">
-              {selectedFiles.length} image(s) selected
-            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {selectedFiles.map((file, index) => (
+                <div key={index} className="relative border rounded-xl p-2">
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt={file.name}
+                    className="w-full h-32 object-cover rounded-lg"
+                  />
+
+                  <p className="mt-1 text-xs truncate text-muted-foreground">
+                    {file.name}
+                  </p>
+
+                  {!loading && (
+                    <button
+                      onClick={() => removeFile(index)}
+                      className="absolute top-2 right-2 bg-black/70 text-white rounded-full p-1"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 🔥 UPLOAD PROGRESS */}
+          {loading && (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground text-center">
+                Uploading image {currentUploadingIndex} of {selectedFiles.length}
+              </p>
+
+              <div className="w-full h-2 bg-border rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all duration-300"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
           )}
 
           <button
             onClick={handleUpload}
             disabled={loading}
-            className="w-full py-3 rounded-xl font-semibold
-                       bg-primary text-white hover:opacity-90
-                       disabled:opacity-50 transition"
+            className="w-full py-3 rounded-xl bg-primary text-white font-semibold
+                       hover:opacity-90 disabled:opacity-50 transition"
           >
             {loading ? "Uploading..." : "Upload"}
           </button>
@@ -188,7 +312,6 @@ export const Upload = () => {
         </div>
       </main>
 
-      {/* ✅ FOOTER */}
       <Footer />
     </>
   );

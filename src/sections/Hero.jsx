@@ -1,8 +1,31 @@
-import { ArrowRight, Facebook, Instagram, Twitter, Youtube } from "lucide-react";
-import { Button } from "@/components/Button";
-import { AnimatedBorderButton } from "@/components/AnimatedBorderButton";
+import {
+  ArrowRight,
+  Facebook,
+  Instagram,
+  Twitter,
+  Youtube,
+} from "lucide-react";
 
 export const Hero = () => {
+  const scrollToContact = () => {
+    const contactSection = document.querySelector("#contact");
+    const navbar = document.querySelector("header");
+    const navbarHeight = navbar?.offsetHeight || 80;
+
+    if (!contactSection) return;
+
+    const top =
+      contactSection.getBoundingClientRect().top +
+      window.scrollY -
+      navbarHeight -
+      16;
+
+    window.scrollTo({
+      top,
+      behavior: "smooth",
+    });
+  };
+
   return (
     <section
       id="home"
@@ -20,34 +43,19 @@ export const Hero = () => {
       {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/80 to-background" />
 
-      {/* Floating Dots */}
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(30)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1.5 h-1.5 rounded-full opacity-60"
-            style={{
-              backgroundColor: "#20B2A6",
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animation: `slow-drift ${15 + Math.random() * 20}s ease-in-out infinite`,
-            }}
-          />
-        ))}
-      </div>
-
       {/* Content */}
       <div className="container mx-auto px-6 pt-32 pb-20 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Text */}
+
+          {/* TEXT */}
           <div className="space-y-8">
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-sm text-primary animate-fade-in">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-sm text-primary">
               <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
               AI Prompt Expert & Content Creator
             </span>
 
-            <h1 className="text-5xl md:text-6xl font-bold leading-tight animate-fade-in animation-delay-100">
-              The master <span className="text-primary glow-text">AI</span>
+            <h1 className="text-5xl md:text-6xl font-bold leading-tight">
+              The master <span className="text-primary">AI</span>
               <br />
               expert with
               <br />
@@ -56,26 +64,43 @@ export const Hero = () => {
               </span>
             </h1>
 
-            <p className="text-lg text-muted-foreground max-w-lg animate-fade-in animation-delay-200">
+            <p className="text-lg text-muted-foreground max-w-lg">
               Hi, I’m Ahsan — AI Visual Expert. I create scroll-stopping images and
               videos for social platforms.
             </p>
 
-            {/* Buttons */}
-            <div className="flex gap-4 animate-fade-in animation-delay-300">
-              <Button size="lg">
-                Contact Me <ArrowRight className="w-5 h-5" />
-              </Button>
-              <AnimatedBorderButton>Download PDF</AnimatedBorderButton>
+            {/* ✅ CUSTOM CONTACT BUTTON */}
+            <div className="flex gap-4">
+              <button
+                onClick={scrollToContact}
+                className="
+                  group inline-flex items-center gap-3
+                  px-8 py-4 rounded-2xl
+                  bg-primary text-white font-semibold
+                  shadow-lg shadow-primary/30
+                  hover:shadow-primary/50 hover:scale-[1.03]
+                  active:scale-95
+                  transition-all duration-300
+                "
+              >
+                <span>Contact Me</span>
+                <ArrowRight
+                  className="
+                    w-5 h-5
+                    transition-transform duration-300
+                    group-hover:translate-x-1
+                  "
+                />
+              </button>
             </div>
 
-            {/* Social */}
-            <div className="flex gap-4 animate-fade-in animation-delay-400">
+            {/* SOCIAL ICONS */}
+            <div className="flex gap-4 pt-2">
               {[Instagram, Facebook, Youtube, Twitter].map((Icon, idx) => (
                 <a
                   key={idx}
                   href="#"
-                  className="p-2 rounded-full glass hover:text-primary"
+                  className="p-2 rounded-full glass hover:text-primary transition"
                 >
                   <Icon className="w-5 h-5" />
                 </a>
@@ -83,8 +108,8 @@ export const Hero = () => {
             </div>
           </div>
 
-          {/* Image */}
-          <div className="relative animate-fade-in animation-delay-300">
+          {/* IMAGE */}
+          <div className="relative">
             <div className="absolute inset-0 rounded-3xl bg-primary/20 blur-2xl" />
             <div className="relative glass rounded-3xl p-2 glow-border">
               <img
@@ -94,6 +119,7 @@ export const Hero = () => {
               />
             </div>
           </div>
+
         </div>
       </div>
     </section>

@@ -30,7 +30,7 @@ const contactInfo = [
   },
 ];
 
-export const Contact = () => {
+const Contact = () => {
   const [status, setStatus] = useState("idle");
   const [loading, setLoading] = useState(false);
 
@@ -60,7 +60,6 @@ export const Contact = () => {
         throw new Error("Submission failed");
       }
     } catch (err) {
-      console.error(err);
       setStatus("error");
     } finally {
       setLoading(false);
@@ -68,7 +67,10 @@ export const Contact = () => {
   };
 
   return (
-    <section id="contact" className="py-32 relative overflow-hidden">
+    <section
+      id="contact"
+      className="py-32 relative overflow-hidden scroll-mt-32"
+    >
       {/* Background */}
       <div className="absolute inset-0">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
@@ -89,117 +91,72 @@ export const Contact = () => {
           </p>
         </div>
 
-        {/* MAIN GRID */}
+        {/* Content */}
         <div className="grid lg:grid-cols-2 gap-12 max-w-5xl mx-auto">
           {/* FORM */}
           <div className="glass p-8 rounded-3xl">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Anti-spam */}
-              <input type="text" name="_honey" style={{ display: "none" }} />
+              <input type="text" name="_honey" hidden />
               <input type="hidden" name="_captcha" value="false" />
-              <input type="hidden" name="_template" value="table" />
-              <input type="hidden" name="_subject" value="New Website Contact" />
-              <input type="hidden" name="_replyto" value="%email%" />
 
-              <div>
-                <label className="block text-sm mb-2">Name</label>
-                <input
-                  name="name"
-                  required
-                  className="w-full px-4 py-3 bg-surface rounded-xl border border-border focus:border-primary outline-none"
-                />
-              </div>
+              <input
+                name="name"
+                placeholder="Name"
+                required
+                className="w-full px-4 py-3 bg-surface rounded-xl border"
+              />
 
-              <div>
-                <label className="block text-sm mb-2">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  className="w-full px-4 py-3 bg-surface rounded-xl border border-border focus:border-primary outline-none"
-                />
-              </div>
+              <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                required
+                className="w-full px-4 py-3 bg-surface rounded-xl border"
+              />
 
-              <div>
-                <label className="block text-sm mb-2">Message</label>
-                <textarea
-                  name="message"
-                  rows={5}
-                  required
-                  className="w-full px-4 py-3 bg-surface rounded-xl border border-border focus:border-primary outline-none resize-none"
-                />
-              </div>
+              <textarea
+                name="message"
+                rows={5}
+                placeholder="Message"
+                required
+                className="w-full px-4 py-3 bg-surface rounded-xl border resize-none"
+              />
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? (
-                  "Sending..."
-                ) : (
-                  <>
-                    Send Message <Send className="w-5 h-5" />
-                  </>
-                )}
+                {loading ? "Sending..." : "Send Message"}
               </Button>
 
               {status === "success" && (
-                <div className="flex gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400">
-                  <CheckCircle className="w-5 h-5" />
-                  Message sent successfully!
+                <div className="text-green-400 flex gap-2">
+                  <CheckCircle /> Message sent successfully
                 </div>
               )}
 
               {status === "error" && (
-                <div className="flex gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400">
-                  <AlertCircle className="w-5 h-5" />
-                  Failed to send message.
+                <div className="text-red-400 flex gap-2">
+                  <AlertCircle /> Failed to send message
                 </div>
               )}
             </form>
           </div>
 
-          {/* RIGHT COLUMN */}
-          <div className="space-y-6">
-            {/* Contact Info */}
-            <div className="glass rounded-3xl p-8">
-              <h3 className="text-xl font-semibold mb-6">
-                Contact Information
-              </h3>
-
-              <div className="space-y-4">
-                {contactInfo.map((item, i) => (
-                  <a
-                    key={i}
-                    href={item.href}
-                    className="flex items-center gap-4 p-4 rounded-xl hover:bg-surface transition"
-                  >
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                      <item.icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">
-                        {item.label}
-                      </div>
-                      <div className="font-medium">{item.value}</div>
-                    </div>
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {/* Availability Card */}
-            <div className="glass rounded-3xl p-8 border border-primary/30">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                <span className="font-medium">Currently Available</span>
-              </div>
-              <p className="text-muted-foreground text-sm">
-                I'm currently open to new opportunities and exciting projects.
-                Whether you need a full-time engineer or a freelance consultant,
-                let's talk!
-              </p>
-            </div>
+          {/* INFO */}
+          <div className="glass p-8 rounded-3xl space-y-4">
+            {contactInfo.map((item, i) => (
+              <a
+                key={i}
+                href={item.href}
+                className="flex gap-4 items-center p-4 rounded-xl hover:bg-surface"
+              >
+                <item.icon className="w-5 h-5 text-primary" />
+                <span>{item.value}</span>
+              </a>
+            ))}
           </div>
         </div>
       </div>
     </section>
   );
 };
+
+export default Contact;

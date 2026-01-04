@@ -2,7 +2,7 @@ import { Navbar } from "@/layout/Navbar";
 import { Hero } from "@/sections/Hero";
 import { About } from "@/sections/About";
 import { MyDetails } from "@/sections/MyDetails";
-import { Contact } from "@/sections/Contact";
+import Contact from "@/sections/Contact";
 import { Footer } from "@/layout/Footer";
 
 export const Home = () => {
@@ -11,8 +11,8 @@ export const Home = () => {
       <Navbar />
       <main>
         <Hero />
-        <About />
         <MyDetails />
+        <About />
         <Contact />
       </main>
       <Footer/>

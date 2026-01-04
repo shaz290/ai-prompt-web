@@ -4,7 +4,6 @@ import {
   useRef,
 } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { SiOpenai, SiGoogle, SiPerplexity } from "react-icons/si";
 
 const PAGE_SIZE = 4;
@@ -23,6 +22,12 @@ const formatDate = (date) => {
     month: "short",
     year: "numeric",
   });
+};
+
+/* ---------- CLOUDFARE IMAGE ID ---------- */
+const extractCloudflareImageId = (url) => {
+  // https://imagedelivery.net/<account>/<imageId>/public
+  return url?.split("/")?.[4];
 };
 
 export const MyDetails = () => {
@@ -47,9 +52,7 @@ export const MyDetails = () => {
 
   /* ---------- AUTH CHECK ---------- */
   const checkAuth = async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
       setIsAdmin(false);
@@ -83,6 +86,47 @@ export const MyDetails = () => {
 
     if (!error) setData(data);
     setLoading(false);
+  };
+
+  /* ---------- DELETE HANDLER ---------- */
+  const handleDelete = async (item) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this description?\nThis cannot be undone."
+    );
+
+    if (!confirmed) return;
+
+    try {
+      // 1️⃣ Delete from Supabase
+      const { error } = await supabase
+        .from("descriptions")
+        .delete()
+        .eq("id", item.id);
+
+      if (error) throw error;
+
+      // 2️⃣ Extract Cloudflare image IDs
+      const imageIds =
+        item.image_urls
+          ?.map((img) => extractCloudflareImageId(img.image_url))
+          .filter(Boolean) || [];
+
+      // 3️⃣ Delete from Cloudflare (backend)
+      if (imageIds.length > 0) {
+        await fetch("/api/delete-cloudflare-images", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageIds }),
+        });
+      }
+
+      // 4️⃣ Update UI
+      setData((prev) => prev.filter((d) => d.id !== item.id));
+      showToast("Deleted successfully");
+    } catch (err) {
+      console.error(err);
+      showToast("Delete failed");
+    }
   };
 
   /* ---------- ACCESS CONTROL ---------- */
@@ -195,7 +239,8 @@ export const MyDetails = () => {
                     Copy
                   </button>
 
-                  {isAdmin && (
+                  {/* SHARE BUTTON (UNCHANGED) */}
+                  {(
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(
@@ -206,6 +251,16 @@ export const MyDetails = () => {
                       className="w-full py-2 border rounded-xl"
                     >
                       Share Link
+                    </button>
+                  )}
+
+                  {/* DELETE BUTTON (ADDED BELOW SHARE) */}
+                  {isAdmin && (
+                    <button
+                      onClick={() => handleDelete(item)}
+                      className="w-full py-2 border border-red-500 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition"
+                    >
+                      Delete
                     </button>
                   )}
 

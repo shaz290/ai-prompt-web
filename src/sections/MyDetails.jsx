@@ -46,7 +46,6 @@ export const MyDetails = () => {
 
   const [activeFilter, setActiveFilter] = useState("all");
 
-  const cardRefs = useRef({});
   const sectionRef = useRef(null);
   const firstRender = useRef(true);
 
@@ -54,6 +53,7 @@ export const MyDetails = () => {
   useEffect(() => {
     const id = getShareIdFromUrl();
     if (id) setSharedId(id);
+
     checkAuth();
     fetchDetails();
   }, []);
@@ -70,6 +70,16 @@ export const MyDetails = () => {
       block: "start",
     });
   }, [currentPage]);
+
+  /* ---------- SCROLL TO SECTION ON SHARED LINK ---------- */
+  useEffect(() => {
+    if (sharedId && !loading) {
+      sectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [sharedId, loading]);
 
   /* ---------- AUTH CHECK ---------- */
   const checkAuth = async () => {

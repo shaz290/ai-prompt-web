@@ -46,6 +46,9 @@ export const MyDetails = () => {
 
   const [activeFilter, setActiveFilter] = useState("all");
 
+  const [editingId, setEditingId] = useState(null);
+  const [editValue, setEditValue] = useState("");
+
   const sectionRef = useRef(null);
   const firstRender = useRef(true);
 
@@ -58,7 +61,7 @@ export const MyDetails = () => {
     fetchDetails();
   }, []);
 
-  /* ---------- SCROLL TO TOP ON PAGINATION ---------- */
+  /* ---------- SCROLL ON PAGINATION ---------- */
   useEffect(() => {
     if (firstRender.current) {
       firstRender.current = false;
@@ -71,7 +74,7 @@ export const MyDetails = () => {
     });
   }, [currentPage]);
 
-  /* ---------- SCROLL TO SECTION ON SHARED LINK ---------- */
+  /* ---------- SCROLL ON SHARED ---------- */
   useEffect(() => {
     if (sharedId && !loading) {
       sectionRef.current?.scrollIntoView({
@@ -124,36 +127,58 @@ export const MyDetails = () => {
     setLoading(false);
   };
 
+  /* ---------- UPDATE ---------- */
+  const handleUpdate = async (itemId) => {
+    if (!editValue.trim()) {
+      showToast("Description cannot be empty");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("descriptions")
+      .update({ description_details: editValue })
+      .eq("id", itemId);
+
+    if (!error) {
+      setData((prev) =>
+        prev.map((d) =>
+          d.id === itemId
+            ? { ...d, description_details: editValue }
+            : d
+        )
+      );
+      setEditingId(null);
+      setEditValue("");
+      showToast("Updated successfully");
+    } else {
+      showToast("Update failed");
+    }
+  };
+
   /* ---------- DELETE ---------- */
   const handleDelete = async (item) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this?\nThis cannot be undone."
     );
-
     if (!confirmed) return;
 
-    try {
-      await supabase.from("descriptions").delete().eq("id", item.id);
+    await supabase.from("descriptions").delete().eq("id", item.id);
 
-      const imageIds =
-        item.image_urls
-          ?.map((img) => extractCloudinaryImageId(img.image_url))
-          .filter(Boolean) || [];
+    const imageIds =
+      item.image_urls
+        ?.map((img) => extractCloudinaryImageId(img.image_url))
+        .filter(Boolean) || [];
 
-      if (imageIds.length > 0) {
-        await fetch("/api/delete-cloudflare-images", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageIds }),
-        });
-      }
-
-      setData((prev) => prev.filter((d) => d.id !== item.id));
-      showToast("Deleted successfully");
-    } catch (err) {
-      console.error(err);
-      showToast("Delete failed");
+    if (imageIds.length > 0) {
+      await fetch("/api/delete-cloudflare-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageIds }),
+      });
     }
+
+    setData((prev) => prev.filter((d) => d.id !== item.id));
+    showToast("Deleted successfully");
   };
 
   /* ---------- ACCESS CONTROL ---------- */
@@ -255,7 +280,17 @@ export const MyDetails = () => {
           </div>
         )}
 
-        {/* GRID */}
+        {/* NO CONTENT (ONLY ADDITION) */}
+        {paginatedData.length === 0 && (
+          <div className="text-center py-24">
+            <h3 className="text-xl font-semibold">No Content</h3>
+            <p className="text-muted-foreground mt-2">
+              No items available for this category.
+            </p>
+          </div>
+        )}
+
+        {/* GRID (UNCHANGED) */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-12">
           {paginatedData.map((item) => {
             const images = item.image_urls || [];
@@ -273,9 +308,17 @@ export const MyDetails = () => {
                   <span>{formatDate(item.created_on)}</span>
                 </div>
 
-                <div className="description-scroll h-[96px] text-sm text-muted-foreground pr-1">
-                  {item.description_details}
-                </div>
+                {editingId === item.id ? (
+                  <textarea
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    className="description-scroll h-[96px] text-sm border rounded-xl p-2 resize-none"
+                  />
+                ) : (
+                  <div className="description-scroll h-[96px] text-sm text-muted-foreground pr-1">
+                    {item.description_details}
+                  </div>
+                )}
 
                 <div className="mt-auto space-y-3">
                   <button
@@ -301,12 +344,44 @@ export const MyDetails = () => {
                   </button>
 
                   {isAdmin && (
-                    <button
-                      onClick={() => handleDelete(item)}
-                      className="w-full py-2 border border-red-500 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition"
-                    >
-                      Delete
-                    </button>
+                    <>
+                      {editingId === item.id ? (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleUpdate(item.id)}
+                            className="w-full py-2 bg-green-600 text-white rounded-xl"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingId(null);
+                              setEditValue("");
+                            }}
+                            className="w-full py-2 border rounded-xl"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setEditingId(item.id);
+                            setEditValue(item.description_details);
+                          }}
+                          className="w-full py-2 border rounded-xl"
+                        >
+                          Edit
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleDelete(item)}
+                        className="w-full py-2 border border-red-500 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition"
+                      >
+                        Delete
+                      </button>
+                    </>
                   )}
 
                   <div className="flex justify-center gap-6 pt-2">
@@ -363,6 +438,7 @@ export const MyDetails = () => {
             ))}
           </div>
         )}
+
       </div>
     </section>
   );

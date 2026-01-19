@@ -14,7 +14,6 @@ const getShareIdFromUrl = () => {
 /* ---------- DATE FORMATTER ---------- */
 const formatDate = (date) => {
   if (!date) return "";
-
   return new Date(date)
     .toLocaleString("en-IN", {
       day: "2-digit",
@@ -54,11 +53,22 @@ export const MyDetails = () => {
 
   /* ---------- INITIAL LOAD ---------- */
   useEffect(() => {
-    const id = getShareIdFromUrl();
-    if (id) setSharedId(id);
+    const init = async () => {
+      const id = getShareIdFromUrl();
+      if (id) setSharedId(id);
 
-    checkAuth();
-    fetchDetails();
+      const admin = await checkAuth();
+
+      if (admin || id) {
+        await fetchDetails();
+      } else {
+        setLoading(false);
+      }
+
+      setCheckingAuth(false);
+    };
+
+    init();
   }, []);
 
   /* ---------- SCROLL ON PAGINATION ---------- */
@@ -92,8 +102,7 @@ export const MyDetails = () => {
 
     if (!session) {
       setIsAdmin(false);
-      setCheckingAuth(false);
-      return;
+      return false;
     }
 
     const { data: profile } = await supabase
@@ -102,8 +111,9 @@ export const MyDetails = () => {
       .eq("id", session.user.id)
       .single();
 
-    setIsAdmin(profile?.role === "admin");
-    setCheckingAuth(false);
+    const admin = profile?.role === "admin";
+    setIsAdmin(admin);
+    return admin;
   };
 
   /* ---------- FETCH ---------- */
@@ -181,8 +191,17 @@ export const MyDetails = () => {
     showToast("Deleted successfully");
   };
 
+  /* ---------- AUTH LOADING GUARD ---------- */
+  if (checkingAuth) {
+    return (
+      <section className="py-32 text-center">
+        <p>Checking access...</p>
+      </section>
+    );
+  }
+
   /* ---------- ACCESS CONTROL ---------- */
-  if (!checkingAuth && !isAdmin && !sharedId) {
+  if (!isAdmin && !sharedId) {
     return (
       <section className="py-32 text-center">
         <h2 className="text-2xl font-bold">Access Restricted 🔒</h2>
@@ -259,7 +278,7 @@ export const MyDetails = () => {
                   setActiveFilter(filter);
                   setCurrentPage(1);
                 }}
-                className={`px-4 py-2 rounded-xl text-sm capitalize transition ${
+                className={`px-4 py-2 rounded-xl capitalize transition ${
                   activeFilter === filter
                     ? "bg-primary text-white"
                     : "border text-muted-foreground hover:bg-surface"
@@ -280,17 +299,7 @@ export const MyDetails = () => {
           </div>
         )}
 
-        {/* NO CONTENT (ONLY ADDITION) */}
-        {paginatedData.length === 0 && (
-          <div className="text-center py-24">
-            <h3 className="text-xl font-semibold">No Content</h3>
-            <p className="text-muted-foreground mt-2">
-              No items available for this category.
-            </p>
-          </div>
-        )}
-
-        {/* GRID (UNCHANGED) */}
+        {/* GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-12">
           {paginatedData.map((item) => {
             const images = item.image_urls || [];
@@ -438,7 +447,6 @@ export const MyDetails = () => {
             ))}
           </div>
         )}
-
       </div>
     </section>
   );

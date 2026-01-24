@@ -236,9 +236,9 @@ export const MyDetails = () => {
     sharedId || !isAdmin
       ? filteredData
       : filteredData.slice(
-          (currentPage - 1) * PAGE_SIZE,
-          currentPage * PAGE_SIZE
-        );
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE
+      );
 
   /* ---------- TOAST ---------- */
   const showToast = (msg) => {
@@ -278,11 +278,10 @@ export const MyDetails = () => {
                   setActiveFilter(filter);
                   setCurrentPage(1);
                 }}
-                className={`px-4 py-2 rounded-xl capitalize transition ${
-                  activeFilter === filter
-                    ? "bg-primary text-white"
-                    : "border text-muted-foreground hover:bg-surface"
-                }`}
+                className={`px-4 py-2 rounded-xl capitalize transition ${activeFilter === filter
+                  ? "bg-primary text-white"
+                  : "border text-muted-foreground hover:bg-surface"
+                  }`}
               >
                 {filter}
               </button>
@@ -431,20 +430,84 @@ export const MyDetails = () => {
 
         {/* PAGINATION */}
         {isAdmin && !sharedId && totalPages > 1 && (
-          <div className="flex justify-center gap-2 mt-16">
-            {Array.from({ length: totalPages }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentPage(i + 1)}
-                className={`px-4 py-2 rounded-lg text-sm ${
-                  currentPage === i + 1
-                    ? "bg-primary text-white"
-                    : "bg-surface text-muted-foreground"
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
+          <div className="flex justify-center items-center gap-2 mt-16">
+
+            {/* FIRST */}
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              className="px-4 py-2 rounded-xl text-sm bg-surface text-muted-foreground
+                 transition-all duration-200 ease-out
+                 hover:bg-primary/10 hover:text-primary
+                 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              First
+            </button>
+
+            {/* PREVIOUS */}
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 rounded-xl text-sm bg-surface text-muted-foreground
+                 transition-all duration-200 ease-out
+                 hover:bg-primary/10 hover:text-primary
+                 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Prev
+            </button>
+
+            {/* PAGE NUMBERS (MAX 3) */}
+            {(() => {
+              let start = Math.max(currentPage - 1, 1);
+              let end = Math.min(start + 2, totalPages);
+
+              if (end - start < 2) {
+                start = Math.max(end - 2, 1);
+              }
+
+              return Array.from(
+                { length: end - start + 1 },
+                (_, i) => start + i
+              ).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-4 py-2 rounded-xl text-sm
+            transition-all duration-200 ease-out
+            ${currentPage === page
+                      ? "bg-primary text-white shadow-sm"
+                      : "bg-surface text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                    }`}
+                >
+                  {page}
+                </button>
+              ));
+            })()}
+
+            {/* NEXT */}
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 rounded-xl text-sm bg-surface text-muted-foreground
+                 transition-all duration-200 ease-out
+                 hover:bg-primary/10 hover:text-primary
+                 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+
+            {/* LAST */}
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 rounded-xl text-sm bg-surface text-muted-foreground
+                 transition-all duration-200 ease-out
+                 hover:bg-primary/10 hover:text-primary
+                 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Last
+            </button>
+
           </div>
         )}
       </div>
